@@ -13,7 +13,7 @@ class MatplotWX(wx.Panel):
     def __init__(self, channels=1, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        subscribe(listener=self.update_temperature, topicName='engine.answer.sensor_temp')
+        subscribe(listener=self.update_pressures, topicName='engine.answer.sensor_temp')
 
         self.styles = {s_file[:-9]: mpl.rc_params_from_file(os.path.join('Styles', s_file), use_default_template=False)
                        for s_file in os.listdir('Styles')}
@@ -44,39 +44,40 @@ class MatplotWX(wx.Panel):
         self.figure.tight_layout()
 
     @in_main_thread
-    def update_temperature(self, temp):
-        self.text.set_text('{:.2f} °C'.format(temp))
+    def update_pressures(self, channel, pressure):
+        self.texts[channel].set_text('{:.1f} mbar'.format(pressure))
         self.figure.canvas.draw()
 
     @in_main_thread
-    def add_sensor_temp_point(self, temp):
+    def add_pressure_data_point(self, channel, pressure):
         delta_t = datetime.now() - self.startime
         time = delta_t.days*86400.0 + delta_t.seconds + delta_t.microseconds/1000000.0
 
-        self.sens_temp_plot.set_xdata(np.append(self.sens_temp_plot.get_xdata(), time))
-        self.sens_temp_plot.set_ydata(np.append(self.sens_temp_plot.get_ydata(), temp))
+        self.plots[channel].set_xdata(np.append(self.plots[channel].get_xdata(), time))
+        self.plots[channel].set_ydata(np.append(self.plots[channel].get_ydata(), pressure))
 
-        self.axes.relim()
-        self.axes.autoscale_view()
+        self.axes[0, channel].relim()
+        self.axes[0, channel].autoscale_view()
         self.figure.canvas.draw()
 
     def start_plotting(self, *args):
         if not self.is_plotting:
             self.is_plotting = True
             self.startime = datetime.now()
-            subscribe(topicName='engine.answer.sensor_temp', listener=self.add_sensor_temp_point)
+            subscribe(topicName='engine.answer.sensor_temp', listener=self.add_pressure_data_point)
 
     def stop_plotting(self, *args):
         self.is_plotting = False
-        unsubscribe(topicName='engine.answer.sensor_temp', listener=self.add_sensor_temp_point)
+        unsubscribe(topicName='engine.answer.sensor_temp', listener=self.add_pressure_data_point)
 
     def cont_plotting(self, *args):
         self.is_plotting = True
-        subscribe(topicName='engine.answer.sensor_temp', listener=self.add_sensor_temp_point)
+        subscribe(topicName='engine.answer.sensor_temp', listener=self.add_pressure_data_point)
 
     def clear_plot(self, *args):
-        self.sens_temp_plot.set_xdata([])
-        self.sens_temp_plot.set_ydata([])
+        for plot in self.plots:
+            plot.set_xdata([])
+            plot.set_ydata([])
         self.figure.canvas.draw()
 
     def set_style(self, style):
