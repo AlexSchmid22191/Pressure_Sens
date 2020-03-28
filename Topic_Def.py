@@ -17,14 +17,15 @@ class engine:
         UNDOCUMENTED: created as parent without specification
         """
 
-        class sensor_temp:
+        class sensor_pressure:
             """
             UNDOCUMENTED: created without spec
             """
             
-            def msgDataSpec(temp):
+            def msgDataSpec(channel, pressure):
                 """
-                - temp: UNDOCUMENTED
+                - channel: UNDOCUMENTED
+                - pressure: UNDOCUMENTED
                 """
 
     class status:
@@ -40,6 +41,22 @@ class gui:
     """
     UNDOCUMENTED: created as parent without specification
     """
+
+    class request:
+        """
+        UNDOCUMENTED: created as parent without specification
+        """
+
+        class pressure:
+            """
+            UNDOCUMENTED: created without spec
+            """
+
+            def msgDataSpec(channel):
+                """
+                - channel: UNDOCUMENTED
+                """
+
 
     class con:
         """

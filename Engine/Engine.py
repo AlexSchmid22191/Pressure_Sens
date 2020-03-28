@@ -37,20 +37,20 @@ class LoggerEngine:
         try:
             self.sensor = self.sensor_types[sensor_type](port=sensor_port)
             sleep(1)
-            subscribe(self.get_sensor_pressure, 'gui.request.sensor_temp')
+            subscribe(self.get_sensor_pressure, 'gui.request.pressure')
             sendMessage(topicName='engine.status', text='Sensor connected!')
         except SerialException:
             sendMessage(topicName='engine.status', text='Connection error!')
 
     def remove_sensor(self):
         self.sensor.close()
-        unsubscribe(self.get_sensor_pressure, 'gui.request.sensor_temp')
+        unsubscribe(self.get_sensor_pressure, 'gui.request.pressure')
         sendMessage(topicName='engine.status', text='Sensor disconnected!')
 
     @in_new_thread
     def get_sensor_pressure(self, channel):
         try:
-            answer = self.sensor.read_temperature(channel=channel)
+            answer = self.sensor.read_pressure(channel=channel)
             if isinstance(answer, str):
                 sendMessage(topicName='engine.status', text='Sensor error: ' + answer)
                 self.sensor_pressures[channel] = nan

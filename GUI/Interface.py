@@ -41,7 +41,8 @@ class LoggerInterface(wx.Frame):
                   id=self.menu_bar.channelmenu.GetMenuItems()[0].GetId(),
                   id2=self.menu_bar.channelmenu.GetMenuItems()[-1].GetId())
 
-        self.matplot = self.draw_matplot()
+        self.matplot = MatplotWX(channels=self.channels, parent=self)
+        self.Fit()
 
         self.Bind(wx.EVT_MENU, source=self.menu_bar.plotmenu.start, handler=self.matplot.start_plotting)
         self.Bind(wx.EVT_MENU, source=self.menu_bar.plotmenu.stop, handler=self.matplot.stop_plotting)
@@ -85,19 +86,7 @@ class LoggerInterface(wx.Frame):
     def change_style(self, event):
         self.matplot.set_style(self.menu_bar.stylmenu.FindItemById(event.GetId()).GetItemLabel())
 
-    def draw_matplot(self, *event):
-        matplot = MatplotWX(channels=self.channels, parent=self)
-        vbox = wx.BoxSizer(orient=wx.VERTICAL)
-        vbox.Add(matplot, flag=wx.EXPAND | wx.FIXED_MINSIZE, proportion=1)
-
-        vbox.Fit(self)
-        self.SetSizer(vbox)
-        self.SetMinSize((400*self.channels+16, 482))
-        self.Fit()
-        self.Raise()
-
-        return matplot
-
     def set_number_of_channels(self, event):
         self.channels = int(self.menu_bar.channelmenu.FindItemById(event.GetId()).GetItemLabel())
-        self.matplot = self.draw_matplot()
+        self.matplot.change_numberof_channels(self.channels)
+        self.Fit()

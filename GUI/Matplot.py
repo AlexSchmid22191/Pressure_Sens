@@ -13,7 +13,7 @@ class MatplotWX(wx.Panel):
     def __init__(self, channels=1, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        subscribe(listener=self.update_pressures, topicName='engine.answer.sensor_temp')
+        subscribe(listener=self.update_pressures, topicName='engine.answer.sensor_pressure')
 
         self.styles = {s_file[:-9]: mpl.rc_params_from_file(os.path.join('Styles', s_file), use_default_template=False)
                        for s_file in os.listdir('Styles')}
@@ -64,15 +64,15 @@ class MatplotWX(wx.Panel):
         if not self.is_plotting:
             self.is_plotting = True
             self.startime = datetime.now()
-            subscribe(topicName='engine.answer.sensor_temp', listener=self.add_pressure_data_point)
+            subscribe(topicName='engine.answer.sensor_pressure', listener=self.add_pressure_data_point)
 
     def stop_plotting(self, *args):
         self.is_plotting = False
-        unsubscribe(topicName='engine.answer.sensor_temp', listener=self.add_pressure_data_point)
+        unsubscribe(topicName='engine.answer.sensor_pressure', listener=self.add_pressure_data_point)
 
     def cont_plotting(self, *args):
         self.is_plotting = True
-        subscribe(topicName='engine.answer.sensor_temp', listener=self.add_pressure_data_point)
+        subscribe(topicName='engine.answer.sensor_pressure', listener=self.add_pressure_data_point)
 
     def clear_plot(self, *args):
         for plot in self.plots:
@@ -110,3 +110,26 @@ class MatplotWX(wx.Panel):
             print('error')
             # TODO: Implement a proper default styling case
             pass
+
+    def change_numberof_channels(self, channels):
+        self.channels = channels
+        self.figure, self.axes = plt.subplots(ncols=channels, figsize=(4 * channels, 4), squeeze=False)
+
+        for ax in self.axes[0, :]:
+            ax.set_xlabel('Time (s)')
+            ax.set_ylabel('Pressure (mbar)')
+
+        self.plots = [self.axes[0, channel].plot([])[0] for channel in range(self.channels)]
+        self.texts = [self.axes[0, channel].text(0.05, 0.9, '{:.2f} °C'.format(0),
+                                                 transform=self.axes[0, channel].transAxes,
+                                                 size=12) for channel in range(self.channels)]
+
+        self.canvas = FigureCanvas(self, -1, self.figure)
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        self.sizer.Add(self.canvas, flag=wx.GROW | wx.FIXED_MINSIZE, proportion=2)
+        self.SetSizer(self.sizer)
+
+        self.set_style(style=list(self.styles)[0])
+
+        self.Fit()
+        self.figure.tight_layout()
