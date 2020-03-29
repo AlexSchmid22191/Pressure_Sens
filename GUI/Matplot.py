@@ -18,6 +18,8 @@ class MatplotWX(wx.Panel):
         self.styles = {s_file[:-9]: mpl.rc_params_from_file(os.path.join('Styles', s_file), use_default_template=False)
                        for s_file in os.listdir('Styles')}
 
+        self.style = 'Dark'
+
         self.is_plotting = False
         self.channels = channels
         self.startime = datetime.now()
@@ -81,6 +83,7 @@ class MatplotWX(wx.Panel):
         self.figure.canvas.draw()
 
     def set_style(self, style):
+        self.style = style
         try:
             self.figure.set_facecolor(self.styles[style]['figure.facecolor'])
 
@@ -129,7 +132,7 @@ class MatplotWX(wx.Panel):
         self.sizer.Add(self.canvas, flag=wx.GROW | wx.FIXED_MINSIZE, proportion=2)
         self.SetSizer(self.sizer)
 
-        self.set_style(style=list(self.styles)[0])
+        self.set_style(self.style)
 
         self.Fit()
         self.figure.tight_layout()
