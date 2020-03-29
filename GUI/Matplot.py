@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib as mpl; mpl.use('WXAgg')
 import matplotlib.pyplot as plt
 from datetime import datetime
-from pubsub.pub import subscribe, unsubscribe
+from pubsub.pub import subscribe, unsubscribe, sendMessage
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from ThreadDecorators import in_main_thread
 
@@ -15,35 +15,42 @@ class MatplotWX(wx.Panel):
 
         subscribe(listener=self.update_pressures, topicName='engine.answer.sensor_pressure')
 
-        self.styles = {s_file[:-9]: mpl.rc_params_from_file(os.path.join('Styles', s_file), use_default_template=False)
-                       for s_file in os.listdir('Styles')}
-
-        self.style = 'Dark'
-
-        self.is_plotting = False
         self.channels = channels
+
+        self.interval = 1000
+        self.is_plotting = False
         self.startime = datetime.now()
 
+        self.styles = {s_file[:-9]: mpl.rc_params_from_file(os.path.join('Styles', s_file), use_default_template=False)
+                       for s_file in os.listdir('Styles')}
+        self.current_style = list(self.styles)[0]
+
+        self.request_timer = wx.Timer()
+        self.request_timer.Bind(event=wx.EVT_TIMER, handler=self.request_data)
+        self.request_timer.Start(milliseconds=self.interval)
+
         self.figure, self.axes = plt.subplots(ncols=channels, figsize=(4*channels, 4), squeeze=False)
-
-        for ax in self.axes[0, :]:
-            ax.set_xlabel('Time (s)')
-            ax.set_ylabel('Pressure (mbar)')
-
         self.plots = [self.axes[0, channel].plot([])[0] for channel in range(self.channels)]
         self.texts = [self.axes[0, channel].text(0.05, 0.9, '{:.2f} °C'.format(0),
                                                  transform=self.axes[0, channel].transAxes,
                                                  size=12) for channel in range(self.channels)]
 
+        for ax in self.axes[0, :]:
+            ax.set_xlabel('Time (s)')
+            ax.set_ylabel('Pressure (mbar)')
+
+        self.set_style(self.current_style)
+
         self.canvas = FigureCanvas(self, -1, self.figure)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.sizer.Add(self.canvas, flag=wx.GROW | wx.FIXED_MINSIZE, proportion=2)
         self.SetSizer(self.sizer)
-
-        self.set_style(style=list(self.styles)[0])
-
         self.Fit()
         self.figure.tight_layout()
+
+    def request_data(self, *args):
+        for channel in range(self.channels):
+            sendMessage(topicName='gui.request.pressure', channel=channel)
 
     @in_main_thread
     def update_pressures(self, channel, pressure):
@@ -82,8 +89,12 @@ class MatplotWX(wx.Panel):
             plot.set_ydata([])
         self.figure.canvas.draw()
 
+    def set_interval(self, interval):
+        self.interval = int(float(interval) * 1000)
+        self.request_timer.Start(milliseconds=self.interval)
+
     def set_style(self, style):
-        self.style = style
+        self.current_style = style
         try:
             self.figure.set_facecolor(self.styles[style]['figure.facecolor'])
 
@@ -132,7 +143,7 @@ class MatplotWX(wx.Panel):
         self.sizer.Add(self.canvas, flag=wx.GROW | wx.FIXED_MINSIZE, proportion=2)
         self.SetSizer(self.sizer)
 
-        self.set_style(self.style)
+        self.set_style(self.current_style)
 
         self.Fit()
         self.figure.tight_layout()
