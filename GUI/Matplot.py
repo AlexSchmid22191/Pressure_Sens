@@ -90,7 +90,7 @@ class MatplotWX(wx.Panel):
         self.figure.canvas.draw()
 
     def set_interval(self, interval):
-        self.interval = int(float(interval) * 1000)
+        self.interval = interval
         self.request_timer.Start(milliseconds=self.interval)
 
     def set_style(self, style):

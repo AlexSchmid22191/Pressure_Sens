@@ -72,5 +72,6 @@ class LoggerInterface(wx.Frame):
         self.Fit()
 
     def set_interval(self, event):
-        inter = self.menu_bar.plotmenu.FindItemById(event.GetId()).GetItemLabel()
-        self.matplot.set_interval(inter)
+        interval_seconds = self.menu_bar.plotmenu.FindItemById(event.GetId()).GetItemLabel()
+        interval_milliseconds = int(float(interval_seconds) * 1000)
+        self.matplot.set_interval(interval_milliseconds)
