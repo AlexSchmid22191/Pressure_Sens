@@ -19,7 +19,7 @@ class CenterThree(Serial):
     def read_pressure(self, channel):
         with self.com_lock:
 
-            self.write('PR{:d}\n'.format(channel+1).encode())
+            self.write('PR{:d}\n'.format(channel).encode())
             #self.readline()
             self.write('\x05\n'.encode())
             answer = self.readline().decode()

@@ -7,7 +7,7 @@ from GUI.Matplot import MatplotWX
 
 class LoggerInterface(wx.Frame):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs, style=wx.DEFAULT_FRAME_STYLE ^ wx.RESIZE_BORDER)
 
         self.SetTitle('Thermo Logger')
 
@@ -26,7 +26,7 @@ class LoggerInterface(wx.Frame):
                   id2=self.menu_bar.plotmenu.inter.GetMenuItems()[-1].GetId())
         self.Bind(wx.EVT_MENU_RANGE, handler=self.change_style, id=self.menu_bar.stylmenu.GetMenuItems()[0].GetId(),
                   id2=self.menu_bar.stylmenu.GetMenuItems()[-1].GetId())
-        self.Bind(wx.EVT_MENU_RANGE, handler=self.set_number_of_channels,
+        self.Bind(wx.EVT_MENU_RANGE, handler=self.set_active_channels,
                   id=self.menu_bar.channelmenu.GetMenuItems()[0].GetId(),
                   id2=self.menu_bar.channelmenu.GetMenuItems()[-1].GetId())
 
@@ -66,12 +66,17 @@ class LoggerInterface(wx.Frame):
     def change_style(self, event):
         self.matplot.set_style(self.menu_bar.stylmenu.FindItemById(event.GetId()).GetItemLabel())
 
-    def set_number_of_channels(self, event):
-        channels = int(self.menu_bar.channelmenu.FindItemById(event.GetId()).GetItemLabel())
-        self.matplot.change_numberof_channels(channels)
+    def set_active_channels(self, event):
+        item = self.menu_bar.channelmenu.FindItemById(event.GetId())
+        channel = int(item.GetLabel())
+        state = item.IsChecked()
+        self.matplot.change_active_channels(channel, state)
         self.Fit()
+        self.Raise()
 
     def set_interval(self, event):
         interval_seconds = self.menu_bar.plotmenu.FindItemById(event.GetId()).GetItemLabel()
         interval_milliseconds = int(float(interval_seconds) * 1000)
         self.matplot.set_interval(interval_milliseconds)
+
+

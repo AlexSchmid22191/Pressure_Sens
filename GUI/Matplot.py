@@ -10,12 +10,10 @@ from ThreadDecorators import in_main_thread
 
 
 class MatplotWX(wx.Panel):
-    def __init__(self, channels=1, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         subscribe(listener=self.update_pressures, topicName='engine.answer.sensor_pressure')
-
-        self.channels = channels
 
         self.interval = 1000
         self.is_plotting = False
@@ -29,15 +27,23 @@ class MatplotWX(wx.Panel):
         self.request_timer.Bind(event=wx.EVT_TIMER, handler=self.request_data)
         self.request_timer.Start(milliseconds=self.interval)
 
-        self.figure, self.axes = plt.subplots(ncols=channels, figsize=(4*channels, 4), squeeze=False)
-        self.plots = [self.axes[0, channel].plot([])[0] for channel in range(self.channels)]
-        self.texts = [self.axes[0, channel].text(0.05, 0.9, '{:.2f} °C'.format(0),
-                                                 transform=self.axes[0, channel].transAxes,
-                                                 size=12) for channel in range(self.channels)]
+        self.channel_states = {1: True, 2: False, 3: False}
 
-        for ax in self.axes[0, :]:
-            ax.set_xlabel('Time (s)')
-            ax.set_ylabel('Pressure (mbar)')
+        n_actives = sum(self.channel_states.values())
+        actives = [channel for channel in self.channel_states if self.channel_states[channel]]
+
+        self.figure = plt.figure(figsize=(4*n_actives, 4))
+        self.axes = {channel: self.figure.add_subplot(1, n_actives, position+1) for
+                     (channel, position) in zip(actives, range(n_actives))}
+
+        self.plots = {channel: self.axes[channel].plot([])[0] for channel in actives}
+        self.texts = {channel: self.axes[channel].text(0.05, 0.9, '{:.2f} °C'.format(0), transform=self.axes[channel].
+                                                       transAxes, size=12) for channel in actives}
+
+        for channel in self.axes:
+            self.axes[channel].set_title('Channel {:d}'.format(channel))
+            self.axes[channel].set_xlabel('Time (s)')
+            self.axes[channel].set_ylabel('Pressure (mbar)')
 
         self.set_style(self.current_style)
 
@@ -49,8 +55,9 @@ class MatplotWX(wx.Panel):
         self.figure.tight_layout()
 
     def request_data(self, *args):
-        for channel in range(self.channels):
-            sendMessage(topicName='gui.request.pressure', channel=channel)
+        for channel in self.channel_states:
+            if self.channel_states[channel]:
+                sendMessage(topicName='gui.request.pressure', channel=channel)
 
     @in_main_thread
     def update_pressures(self, channel, pressure):
@@ -65,8 +72,8 @@ class MatplotWX(wx.Panel):
         self.plots[channel].set_xdata(np.append(self.plots[channel].get_xdata(), time))
         self.plots[channel].set_ydata(np.append(self.plots[channel].get_ydata(), pressure))
 
-        self.axes[0, channel].relim()
-        self.axes[0, channel].autoscale_view()
+        self.axes[channel].relim()
+        self.axes[channel].autoscale_view()
         self.figure.canvas.draw()
 
     def start_plotting(self, *args):
@@ -84,7 +91,7 @@ class MatplotWX(wx.Panel):
         subscribe(topicName='engine.answer.sensor_pressure', listener=self.add_pressure_data_point)
 
     def clear_plot(self, *args):
-        for plot in self.plots:
+        for plot in self.plots.values():
             plot.set_xdata([])
             plot.set_ydata([])
         self.figure.canvas.draw()
@@ -98,12 +105,14 @@ class MatplotWX(wx.Panel):
         try:
             self.figure.set_facecolor(self.styles[style]['figure.facecolor'])
 
-            for ax in self.axes[0, :]:
+            for ax in self.axes.values():
                 ax.set_facecolor(self.styles[style]['axes.facecolor'])
                 ax.spines['top'].set_color(self.styles[style]['axes.edgecolor'])
                 ax.spines['left'].set_color(self.styles[style]['axes.edgecolor'])
                 ax.spines['right'].set_color(self.styles[style]['axes.edgecolor'])
                 ax.spines['bottom'].set_color(self.styles[style]['axes.edgecolor'])
+
+                ax.title.set_color(self.styles[style]['axes.edgecolor'])
 
                 ax.xaxis.label.set_color(self.styles[style]['axes.labelcolor'])
                 ax.yaxis.label.set_color(self.styles[style]['axes.labelcolor'])
@@ -112,10 +121,10 @@ class MatplotWX(wx.Panel):
                 ax.tick_params(which='both', axis='y', labelcolor=self.styles[style]['ytick.color'],
                                color=self.styles[style]['ytick.color'])
 
-            for plot in self.plots:
+            for plot in self.plots.values():
                 plot.set_color(self.styles[style]['lines.color'])
 
-            for text in self.texts:
+            for text in self.texts.values():
                 text.set_color(self.styles[style]['text.color'])
 
             self.figure.canvas.draw()
@@ -123,27 +132,32 @@ class MatplotWX(wx.Panel):
         except KeyError:
             print('error')
             # TODO: Implement a proper default styling case
-            pass
 
-    def change_numberof_channels(self, channels):
-        self.channels = channels
-        self.figure, self.axes = plt.subplots(ncols=channels, figsize=(4 * channels, 4), squeeze=False)
+    def change_active_channels(self, channel, state):
 
-        for ax in self.axes[0, :]:
-            ax.set_xlabel('Time (s)')
-            ax.set_ylabel('Pressure (mbar)')
+        self.channel_states[channel] = state
 
-        self.plots = [self.axes[0, channel].plot([])[0] for channel in range(self.channels)]
-        self.texts = [self.axes[0, channel].text(0.05, 0.9, '{:.2f} °C'.format(0),
-                                                 transform=self.axes[0, channel].transAxes,
-                                                 size=12) for channel in range(self.channels)]
+        n_actives = sum(self.channel_states.values())
+        actives = [channel for channel in self.channel_states if self.channel_states[channel]]
+
+        self.figure = plt.figure(figsize=(4 * n_actives, 4))
+        self.axes = {channel: self.figure.add_subplot(1, n_actives, position + 1) for
+                     (channel, position) in zip(actives, range(n_actives))}
+
+        self.plots = {channel: self.axes[channel].plot([])[0] for channel in actives}
+        self.texts = {channel: self.axes[channel].text(0.05, 0.9, '{:.2f} °C'.format(0), transform=self.axes[channel].
+                                                       transAxes, size=12) for channel in actives}
+
+        for channel in self.axes:
+            self.axes[channel].set_title('Channel {:d}'.format(channel))
+            self.axes[channel].set_xlabel('Time (s)')
+            self.axes[channel].set_ylabel('Pressure (mbar)')
+
+        self.set_style(self.current_style)
 
         self.canvas = FigureCanvas(self, -1, self.figure)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.sizer.Add(self.canvas, flag=wx.GROW | wx.FIXED_MINSIZE, proportion=2)
         self.SetSizer(self.sizer)
-
-        self.set_style(self.current_style)
-
         self.Fit()
         self.figure.tight_layout()

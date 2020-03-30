@@ -13,7 +13,7 @@ from ThreadDecorators import in_new_thread
 
 
 class LoggerEngine:
-    def __init__(self):
+    def __init__(self, channels=3):
 
         # To prevent multiple devices writing to the same variable
         self.com_lock = Lock()
@@ -23,7 +23,7 @@ class LoggerEngine:
         self.sensor = None
         self.sensor_port = None
 
-        self.sensor_pressures = [nan] * 3
+        self.sensor_pressures = {channel+1: nan for channel in range(channels)}
 
         #self.datalogger = Datalogger(master=self)
 
@@ -117,3 +117,6 @@ class Datalogger:
     def continue_log(self):
         self.is_logging = True
         self.write_log()
+
+
+#TODO: update logger module for 3 channel support

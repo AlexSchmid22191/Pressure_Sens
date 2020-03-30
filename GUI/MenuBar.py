@@ -14,7 +14,8 @@ class Menubar(wx.MenuBar):
 
         self.channelmenu = wx.Menu()
         for channel in range(1, 4):
-            self.channelmenu.Append(item=str(channel), id=wx.ID_ANY, kind=wx.ITEM_RADIO)
+            self.channelmenu.Append(item=str(channel), id=wx.ID_ANY, kind=wx.ITEM_CHECK)
+            self.channelmenu.GetMenuItems()[0].Check()
 
         self.logmenu = LoggingMenu()
         self.devmenu = DeviceMenu()
