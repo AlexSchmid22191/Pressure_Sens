@@ -23,9 +23,7 @@ class LoggerEngine:
         self.sensor = None
         self.sensor_port = None
 
-        self.sensor_pressures = {channel+1: nan for channel in range(channels)}
-
-        #self.datalogger = Datalogger(master=self)
+        self.datalogger = Datalogger(master=self)
 
         subscribe(self.add_sensor, 'gui.con.connect_sensor')
         subscribe(self.remove_sensor, 'gui.con.disconnect_sensor')
@@ -53,11 +51,8 @@ class LoggerEngine:
             answer = self.sensor.read_pressure(channel=channel)
             if isinstance(answer, str):
                 sendMessage(topicName='engine.status', text='Sensor error: ' + answer)
-                self.sensor_pressures[channel] = nan
             else:
-                self.sensor_pressures[channel] = answer
-                sendMessage(topicName='engine.answer.sensor_pressure', channel=channel,
-                            pressure=self.sensor_pressures[channel])
+                sendMessage(topicName='engine.answer.sensor_pressure', channel=channel, pressure=answer)
         except (SerialException, SerialTimeoutException):
             sendMessage(topicName='engine.status', text='Connection error!')
 
@@ -67,8 +62,8 @@ class Datalogger:
         self.master = master
 
         self.logfile_path = 'Logs/Default.txt'
+        self.pressure = {channel: nan for channel in range(1, 4)}
         self.is_logging = False
-
         self.interval = 1
 
         subscribe(self.set_interval, 'gui.log.interval')
@@ -79,18 +74,20 @@ class Datalogger:
 
     @in_new_thread
     def write_log(self):
-        answer = self.master.sensor.read_temperature()
-        if isinstance(answer, str):
-            self.master.sensor_temperature = nan
-        else:
-            self.master.sensor_temperature = answer
+        for channel in self.pressure:
+            answer = self.master.sensor.read_pressure(channel)
+            if isinstance(answer, str):
+                self.pressure[channel] = nan
+            else:
+                self.pressure[channel] = answer
 
         abs_time = datetime.now()
         timestring = abs_time.strftime('%d.%m.%Y - %H:%M:%S')
         unixtime = float(time())
 
         with open(self.logfile_path, 'a') as logfile:
-            logfile.write('{:s}\t{:.3f}\t{:5.1f}\n'.format(timestring, unixtime, self.master.sensor_temperature))
+            logfile.write('{:s}\t{:.3f}\t{:5.2f}\t{:5.2f}\t{:5.2f}\n'.
+                          format(timestring, unixtime, self.pressure[1], self.pressure[2], self.pressure[3]))
 
         if self.is_logging:
             log_timer = Timer(interval=self.interval, function=self.write_log)
@@ -106,8 +103,7 @@ class Datalogger:
         if not self.is_logging:
             self.is_logging = True
             with open(self.logfile_path, 'a') as logfile:
-                logfile.write('Time\tUnixtime (s)\tPressure Channel 1 (mbar)\tPressure Channel 2 (mbar)\t'
-                              'Pressure Channel 3 (mbar)\t \n')
+                logfile.write('Time\tUnixtime (s)\tPressure Channel 1\tPressure Channel 2\tPressure Channel 3\n')
 
             self.write_log()
 
@@ -117,6 +113,3 @@ class Datalogger:
     def continue_log(self):
         self.is_logging = True
         self.write_log()
-
-
-#TODO: update logger module for 3 channel support

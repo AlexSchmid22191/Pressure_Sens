@@ -22,6 +22,7 @@ class LoggerInterface(wx.Frame):
         self.SetMenuBar(self.menu_bar)
         self.Bind(event=wx.EVT_MENU, handler=self.on_quit, id=wx.ID_CLOSE)
         self.Bind(event=wx.EVT_MENU, handler=self.save_image, id=wx.ID_SAVEAS)
+
         self.Bind(wx.EVT_MENU_RANGE, handler=self.set_interval, id=self.menu_bar.plotmenu.inter.GetMenuItems()[0].GetId(),
                   id2=self.menu_bar.plotmenu.inter.GetMenuItems()[-1].GetId())
         self.Bind(wx.EVT_MENU_RANGE, handler=self.change_style, id=self.menu_bar.stylmenu.GetMenuItems()[0].GetId(),
