@@ -12,15 +12,15 @@ class CenterThree(Serial):
 
         with self.com_lock:
             self.write('UNI,0\n'.encode())
-            #self.readline()
+            self.readline()
             self.write('\x05\n'.encode())
-            #self.readline()
+            self.readline()
 
     def read_pressure(self, channel):
         with self.com_lock:
 
             self.write('PR{:d}\n'.format(channel).encode())
-            #self.readline()
+            self.readline()
             self.write('\x05\n'.encode())
             answer = self.readline().decode()
 
