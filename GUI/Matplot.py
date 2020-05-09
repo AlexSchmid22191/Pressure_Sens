@@ -32,7 +32,7 @@ class MatplotWX(wx.Panel):
         n_actives = sum(self.channel_states.values())
         actives = [channel for channel in self.channel_states if self.channel_states[channel]]
 
-        self.figure = plt.figure(figsize=(4*n_actives, 4))
+        self.figure = plt.Figure(figsize=(4*n_actives, 4))
         self.axes = {channel: self.figure.add_subplot(1, n_actives, position+1) for
                      (channel, position) in zip(actives, range(n_actives))}
 
