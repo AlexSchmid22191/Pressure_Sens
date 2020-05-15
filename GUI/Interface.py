@@ -9,7 +9,7 @@ class LoggerInterface(wx.Frame):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs, style=wx.DEFAULT_FRAME_STYLE ^ wx.RESIZE_BORDER)
 
-        self.SetTitle('Thermo Logger')
+        self.SetTitle('Pressure Logger')
 
         self.status_bar = wx.StatusBar(parent=self)
         self.SetStatusBar(statusBar=self.status_bar)
