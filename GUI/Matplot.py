@@ -145,7 +145,7 @@ class MatplotWX(wx.Panel):
                      (channel, position) in zip(actives, range(n_actives))}
 
         self.plots = {channel: self.axes[channel].plot([])[0] for channel in actives}
-        self.texts = {channel: self.axes[channel].text(0.05, 0.9, '{:.2f} °C'.format(0), transform=self.axes[channel].
+        self.texts = {channel: self.axes[channel].text(0.05, 0.9, '{:.2f} mbar'.format(0), transform=self.axes[channel].
                                                        transAxes, size=12) for channel in actives}
 
         for channel in self.axes:
