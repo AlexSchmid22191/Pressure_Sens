@@ -69,7 +69,7 @@ class LoggerInterface(wx.Frame):
 
     def set_active_channels(self, event):
         item = self.menu_bar.channelmenu.FindItemById(event.GetId())
-        channel = int(item.GetLabel())
+        channel = int(item.GetItemLabelText())
         state = item.IsChecked()
         self.matplot.change_active_channels(channel, state)
         self.Fit()

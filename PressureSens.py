@@ -11,6 +11,7 @@ addTopicDefnProvider(Topic_Def, TOPIC_TREE_FROM_CLASS)
 
 def main():
     ex = wx.App()
+    ex.locale = wx.Locale(wx.LANGUAGE_ENGLISH)
     gui = LoggerInterface(parent=None)
     engine = LoggerEngine()
     print('Engine initilized: {:s}'.format(str(engine.__class__)))
