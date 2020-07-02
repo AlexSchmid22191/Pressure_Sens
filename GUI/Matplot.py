@@ -21,7 +21,7 @@ class MatplotWX(wx.Panel):
 
         self.styles = {s_file[:-9]: mpl.rc_params_from_file(os.path.join('Styles', s_file), use_default_template=False)
                        for s_file in os.listdir('Styles')}
-        self.current_style = list(self.styles)[0]
+        self.current_style = list(self.styles)[1]
 
         self.request_timer = wx.Timer()
         self.request_timer.Bind(event=wx.EVT_TIMER, handler=self.request_data)
