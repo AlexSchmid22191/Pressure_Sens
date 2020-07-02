@@ -6,7 +6,7 @@ block_cipher = None
 a = Analysis(['PressureSens.py'],
              pathex=['C:\\Users\\Alex\\PycharmProjects\\Pressure_Sens'],
              binaries=[],
-             datas=[('Styles', 'Styles'), ('Styles', 'Styles')],
+             datas=[('Styles', 'Styles'), ('Icons', 'Icons')],
              hiddenimports=['pkg_resources.py2_warn'],
              hookspath=[],
              runtime_hooks=[],
@@ -26,7 +26,8 @@ exe = EXE(pyz,
           bootloader_ignore_signals=False,
           strip=False,
           upx=True,
-          console=False)
+          console=False,
+          icon='Icons/Logo.ico')
 coll = COLLECT(exe,
                a.binaries,
                a.zipfiles,

@@ -10,6 +10,7 @@ class LoggerInterface(wx.Frame):
         super().__init__(*args, **kwargs, style=wx.DEFAULT_FRAME_STYLE ^ wx.RESIZE_BORDER)
 
         self.SetTitle('Pressure Logger')
+        self.SetIcon(wx.Icon('Icons/Logo.ico'))
 
         self.status_bar = wx.StatusBar(parent=self)
         self.SetStatusBar(statusBar=self.status_bar)
