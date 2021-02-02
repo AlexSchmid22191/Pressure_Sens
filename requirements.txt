@@ -1,5 +1,5 @@
 altgraph==0.17
-bleach==3.1.5
+bleach==3.3.0
 certifi==2020.6.20
 chardet==3.0.4
 colorama==0.4.3
